@@ -1,6 +1,17 @@
 ## Online Courses Application Demo
 
-Technologies: Java, Spring Boot(Hibernate, JPA, REST, Security), MySQL, Postman.
+The application should allow us to register instructors with instructor details and courses.
+Each course can have multiple students, and a student can be subscribed to various courses. 
+The student must be available to leave a reviews.
+
+API routes must be role-restricted, meaning that delete operations are performed by users with the ```ADMIN``` role, 
+and create and update operations must be performed by users with the ```MANAGER``` and manager roles.
+Users with the ```EMPLOYEE``` role can only access the view action for the instructor, student, and the other entities mentioned above.
+
+Every action of create, update, and delete events must be sent to a Kafka topic, which will be used furthermore for the creation of metrics/statistics
+
+#### Technologies
+Java, Spring Boot(Hibernate, JPA, REST, Security), MySQL, Postman, Kafka, Docker.
 
 ### Setting up kafka
 
@@ -226,7 +237,3 @@ curl --location --request DELETE 'localhost:8080/api/courses/students/2' \
 curl --location --request PUT 'localhost:8080/api/courses/students/10/1' \
 --header 'Authorization: Basic c3Rl...'
 ```
-
-
-
-
