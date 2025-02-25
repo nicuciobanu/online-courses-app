@@ -97,13 +97,15 @@ public class OnlineCourseServiceImpl implements OnlineCourseService {
     }
 
     @Override
-    public void assignCourseToInstructor(int instructorId, int courseId) {
+    public Course assignCourseToInstructor(int instructorId, int courseId) {
         Instructor instructor = onlineCoursesDAO.findInstructorById(instructorId);
         Course course = onlineCoursesDAO.findCourseById(courseId);
 
         course.setInstructor(instructor);
 
         onlineCoursesDAO.saveCourse(course);
+
+        return course;
     }
 
     @Override

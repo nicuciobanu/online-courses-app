@@ -1,6 +1,9 @@
 package com.online_courses.rest;
 
 import com.online_courses.entity.*;
+import com.online_courses.kafka.KafkaProducerService;
+import com.online_courses.kafka.model.ActionType;
+import com.online_courses.kafka.model.OnlineCourseEvent;
 import com.online_courses.service.OnlineCourseService;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,9 +13,11 @@ import java.util.List;
 @RequestMapping("/api")
 public class OnlineCourseRestController {
     private final OnlineCourseService onlineCourseService;
+    private final KafkaProducerService kafkaProducerService;
 
-    public OnlineCourseRestController(OnlineCourseService onlineCourseService) {
+    public OnlineCourseRestController(OnlineCourseService onlineCourseService, KafkaProducerService kafkaProducerService) {
         this.onlineCourseService = onlineCourseService;
+        this.kafkaProducerService = kafkaProducerService;
     }
 
     /**
@@ -42,7 +47,10 @@ public class OnlineCourseRestController {
      * */
     @PostMapping("/courses/instructors")
     public void createInstructor(@RequestBody Instructor instructorToStore) {
-       onlineCourseService.createInstructor(instructorToStore);
+        // send online course create event to kafka topic
+        sendOnlineCourseEvent(ActionType.CREATE, instructorToStore);
+
+        onlineCourseService.createInstructor(instructorToStore);
     }
 
     /**
@@ -50,6 +58,9 @@ public class OnlineCourseRestController {
      * */
     @PutMapping("/courses/instructors")
     public void updateInstructor(@RequestBody Instructor instructorToUpdate) {
+        // send online course update event to kafka topic
+        sendOnlineCourseEvent(ActionType.UPDATE, instructorToUpdate);
+
         onlineCourseService.updateInstructor(instructorToUpdate);
     }
 
@@ -63,6 +74,9 @@ public class OnlineCourseRestController {
         if(instructor == null) {
             throw new UnexpectedException("Non-existent instructor id - " + id);
         }
+
+        // send online course delete event to kafka topic
+        sendOnlineCourseEvent(ActionType.DELETE, instructor);
 
         onlineCourseService.deleteInstructorById(id);
     }
@@ -86,6 +100,8 @@ public class OnlineCourseRestController {
      * */
     @PostMapping("/courses/instructors/instructor-details")
     public void createInstructorDetail(@RequestBody InstructorDetail instructorDetail) {
+        sendOnlineCourseEvent(ActionType.CREATE, instructorDetail);
+
         onlineCourseService.coursesInstructorDetail(instructorDetail);
     }
 
@@ -94,6 +110,8 @@ public class OnlineCourseRestController {
      * */
     @PutMapping("/courses/instructors/instructor-details")
     public void updateInstructorDetails(@RequestBody InstructorDetail instructorDetail) {
+        sendOnlineCourseEvent(ActionType.UPDATE, instructorDetail);
+
         onlineCourseService.updateInstructorDetail(instructorDetail);
     }
 
@@ -109,6 +127,8 @@ public class OnlineCourseRestController {
             throw new UnexpectedException("Non-existent instructor detail id - " + id);
         }
 
+        sendOnlineCourseEvent(ActionType.DELETE, instructorDetail);
+
         onlineCourseService.deleteInstructorDetailById(id);
     }
 
@@ -117,8 +137,11 @@ public class OnlineCourseRestController {
      * */
     @PutMapping("/courses/instructors/instructor-details/{instructorId}/{instructorDetailId}")
     public Instructor assignInstructorDetailToInstructor(@PathVariable int instructorId, @PathVariable int instructorDetailId) {
+        Instructor instructor = onlineCourseService.assignInstructorDetailToInstructor(instructorId, instructorDetailId);
 
-        return onlineCourseService.assignInstructorDetailToInstructor(instructorId, instructorDetailId);
+        sendOnlineCourseEvent(ActionType.UPDATE, instructor);
+
+        return instructor;
     }
 
     /**
@@ -139,8 +162,10 @@ public class OnlineCourseRestController {
      * POST /api/courses
      * */
     @PostMapping("/courses")
-    public void createCourse(@RequestBody Course courseToStore) {
-        onlineCourseService.createCourse(courseToStore);
+    public void createCourse(@RequestBody Course course) {
+        sendOnlineCourseEvent(ActionType.CREATE, course);
+
+        onlineCourseService.createCourse(course);
     }
 
     /**
@@ -148,6 +173,8 @@ public class OnlineCourseRestController {
      * */
     @PutMapping("/courses")
     public Course updateCourse(@RequestBody Course course) {
+        sendOnlineCourseEvent(ActionType.UPDATE, course);
+
         return onlineCourseService.updateCourse(course);
     }
 
@@ -162,6 +189,8 @@ public class OnlineCourseRestController {
             throw new UnexpectedException("Non-existent course id - " + id);
         }
 
+        sendOnlineCourseEvent(ActionType.DELETE, course);
+
         onlineCourseService.deleteCourseById(id);
     }
 
@@ -169,8 +198,12 @@ public class OnlineCourseRestController {
      * PUT /api/courses/{instructorId}/{courseId}
      * */
     @PutMapping("/courses/{instructorId}/{courseId}")
-    public void assignCourseToInstructor(@PathVariable int instructorId, @PathVariable int courseId) {
-        onlineCourseService.assignCourseToInstructor(instructorId, courseId);
+    public Course assignCourseToInstructor(@PathVariable int instructorId, @PathVariable int courseId) {
+        Course course = onlineCourseService.assignCourseToInstructor(instructorId, courseId);
+
+        sendOnlineCourseEvent(ActionType.UPDATE, course);
+
+        return course;
     }
 
     /**
@@ -191,8 +224,12 @@ public class OnlineCourseRestController {
      * POST /api/courses/reviews/{courseId}
      * */
     @PostMapping("/courses/reviews/{courseId}")
-    public void addReviewToCourse(@RequestBody Review review, @PathVariable int courseId) {
-       onlineCourseService.addReviewToCourse(review, courseId);
+    public Course addReviewToCourse(@RequestBody Review review, @PathVariable int courseId) {
+        Course courseWithReview = onlineCourseService.addReviewToCourse(review, courseId);
+
+        sendOnlineCourseEvent(ActionType.CREATE, courseWithReview);
+
+        return courseWithReview;
     }
 
     /**
@@ -214,7 +251,7 @@ public class OnlineCourseRestController {
      * */
     @PostMapping("/courses/students")
     public void createStudent(@RequestBody Student student) {
-        student.setId(0);
+        sendOnlineCourseEvent(ActionType.CREATE, student);
 
         onlineCourseService.createStudent(student);
     }
@@ -224,6 +261,8 @@ public class OnlineCourseRestController {
      * */
     @PutMapping("/courses/students")
     public Student updateStudent(@RequestBody Student student) {
+        sendOnlineCourseEvent(ActionType.UPDATE, student);
+
         return onlineCourseService.updateStudent(student);
     }
 
@@ -238,6 +277,8 @@ public class OnlineCourseRestController {
             throw new UnexpectedException("Non-existent student id - " + id);
         }
 
+        sendOnlineCourseEvent(ActionType.DELETE, student);
+
         onlineCourseService.deleteStudentById(id);
     }
 
@@ -245,7 +286,15 @@ public class OnlineCourseRestController {
      * PUT /api/courses/students/{courseId}/{studentId}
      * */
     @PutMapping("courses/students/{courseId}/{studentId}")
-    public void assignStudentToCourse(@PathVariable int courseId, @PathVariable int studentId) {
-        onlineCourseService.assignStudentToCourse(courseId, studentId);
+    public Course assignStudentToCourse(@PathVariable int courseId, @PathVariable int studentId) {
+        Course course = onlineCourseService.assignStudentToCourse(courseId, studentId);
+
+        sendOnlineCourseEvent(ActionType.UPDATE, course);
+
+        return course;
+    }
+
+    public <T>void sendOnlineCourseEvent(ActionType action, T obj) {
+        kafkaProducerService.sendMessage(new OnlineCourseEvent(action, obj));
     }
 }

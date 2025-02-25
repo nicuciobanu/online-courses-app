@@ -1,8 +1,25 @@
-### Online Courses Application Demo
+## Online Courses Application Demo
 
 Technologies: Java, Spring Boot(Hibernate, JPA, REST, Security), MySQL, Postman.
 
-#### Setting up the DB
+### Setting up kafka
+
+Start kafka container:
+```
+docker compose up
+```
+
+Create kafka topic:
+```
+docker-compose exec kafka kafka-topics.sh --create --topic online-courses-events --partitions 1 --replication-factor 1 --bootstrap-server localhost:9092
+```
+
+Read kafka messages:
+```
+docker-compose exec kafka kafka-console-consumer.sh --topic online-courses-events --from-beginning --bootstrap-server localhost:9092
+```
+
+### Setting up the DB
 
 Install MySQL Database Server:
 ```

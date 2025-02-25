@@ -20,7 +20,7 @@ public interface OnlineCourseService {
     void createCourse(Course course);
     Course updateCourse(Course course);
     void deleteCourseById(int id);
-    void assignCourseToInstructor(int instructorId, int courseId);
+    Course assignCourseToInstructor(int instructorId, int courseId);
     Course addReviewToCourse(Review review, int courseId);
     void createStudent(Student student);
     Student getStudentById(int id);

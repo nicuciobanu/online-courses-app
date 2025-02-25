@@ -1,6 +1,7 @@
 package com.online_courses.controller;
 
 import com.online_courses.entity.Instructor;
+import com.online_courses.kafka.KafkaProducerService;
 import com.online_courses.rest.OnlineCourseRestController;
 import com.online_courses.service.OnlineCourseService;
 import com.online_courses.service.OnlineCourseServiceImpl;
@@ -37,6 +38,8 @@ public class OnlineCourseRestControllerTest {
     private MockMvc mockMvc;
     @MockBean
     private OnlineCourseService onlineCourseService;
+    @MockBean
+    private KafkaProducerService kafkaProducerService;
 
     Instructor mockInstructor = new Instructor("John", "Doe", "john.doe@gmail.com");
     List<Instructor> mockInstructors = new ArrayList<>();
